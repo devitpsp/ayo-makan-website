@@ -328,7 +328,10 @@ for (const [name, geo, perms, expect] of [
 {
   const ctx = await browser.newContext({ viewport: { width: 360, height: 640 }, deviceScaleFactor: 2 });
   const page = await ctx.newPage();
-  await page.route("**/api/places/search*", (r) => r.fulfill({ json: SEARCH }));
+  // Tanpa page.route: Playwright mematikan cache HTTP bila routing aktif, sehingga foto hero yang
+  // di-preload diunduh dua kali (tidak terjadi di browser nyata). Tanpa lokasi tersimpan, beranda tidak memanggil API.
+  const apiCalls = [];
+  page.on("request", (r) => { if (r.url().includes("/api/places/")) apiCalls.push(r.url()); });
   const cdp = await ctx.newCDPSession(page);
   await cdp.send("Network.enable");
   await cdp.send("Network.emulateNetworkConditions", { offline: false, latency: 150, downloadThroughput: (1.6 * 1024 * 1024) / 8, uploadThroughput: (750 * 1024) / 8 });
@@ -341,6 +344,7 @@ for (const [name, geo, perms, expect] of [
   await page.waitForTimeout(2500);
   const lcp = await page.evaluate(() => window.__lcp);
   ok("LCP beranda < 2500 ms (throttle mobile)", lcp > 0 && lcp < 2500, `${Math.round(lcp)} ms`);
+  ok("LCP: beranda tanpa lokasi tidak memanggil API Google", apiCalls.length === 0, `${apiCalls.length} panggilan`);
   await ctx.close();
 }
 

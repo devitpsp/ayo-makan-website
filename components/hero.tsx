@@ -21,6 +21,10 @@ const pad = (n: number) => String(n).padStart(2, "0");
  */
 export function Hero() {
   const [i, setI] = useState(0);
+  // Foto slide lain baru dimuat setelah foto pertama selesai, agar tidak berebut bandwidth dengan elemen LCP.
+  const [warm, setWarm] = useState(false);
+  // Animasi masuk foto hanya saat pengguna ganti slide, bukan saat halaman pertama dibuka (menunda LCP).
+  const [moved, setMoved] = useState(false);
   const { set } = useSearchState();
   const { add: addRecent } = useRecentSearches();
   const touch = useRef<number | null>(null);
@@ -28,6 +32,7 @@ export function Hero() {
 
   const goTo = (next: number, via: "tombol" | "geser") => {
     setI(next);
+    setMoved(true);
     ev("hero_slide", { slide: HERO_SLIDES[next].id, action: via });
   };
   const go = (dir: 1 | -1, via: "tombol" | "geser" = "tombol") => goTo((i + dir + COUNT) % COUNT, via);
@@ -144,16 +149,17 @@ export function Hero() {
                     ))}
                   </p>
                   <div className="absolute left-1/2 top-1/2 z-10 h-[94%] w-[78%] -translate-x-1/2 -translate-y-1/2 md:w-[60%] lg:w-[42%]">
-                    {s.photo ? (
+                    {s.photo && !(active || warm) ? null : s.photo ? (
                       // Foto cutout milik Ayo Makan (bukan foto Google), boleh dioptimasi dan di-cache.
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={s.photo}
                         alt={s.alt}
                         draggable={false}
-                        className={`hero-photo h-full w-full object-contain [-webkit-user-drag:none] ${active ? "anim-badge" : ""}`}
+                        className={`hero-photo h-full w-full object-contain [-webkit-user-drag:none] ${active && moved ? "anim-badge" : ""}`}
                         loading={idx === 0 ? "eager" : "lazy"}
                         fetchPriority={idx === 0 ? "high" : "auto"}
+                        onLoad={idx === 0 ? () => setWarm(true) : undefined}
                       />
                     ) : (
                       // Slot placeholder jujur sampai owner mengirim foto (PRD 10.11, Q7).

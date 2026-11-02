@@ -1,10 +1,16 @@
 import { Suspense } from "react";
+import { preload } from "react-dom";
 import Link from "next/link";
+import { HERO_SLIDES } from "@/config/hero-slides";
 import { Hero } from "@/components/hero";
 import { ResultsSection } from "@/components/results";
 import { StickyHeader } from "@/components/sticky-header";
 
 export default function HomePage() {
+  // Hero dirender di klien (di dalam Suspense), jadi browser baru tahu fotonya setelah JS siap.
+  // Preload dari server agar foto slide pertama (elemen LCP) mulai diunduh sejak awal.
+  const first = HERO_SLIDES[0]?.photo;
+  if (first) preload(first, { as: "image", fetchPriority: "high" });
   return (
     <>
       <main id="konten" tabIndex={-1}>

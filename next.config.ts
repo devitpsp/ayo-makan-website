@@ -52,6 +52,12 @@ const nextConfig: NextConfig = {
           { key: "X-Content-Type-Options", value: "nosniff" },
         ],
       },
+      // Foto hero dan logo milik Ayo Makan (bukan konten Google, boleh di-cache).
+      // Tanpa ini max-age=0 membuat <img> mengunduh ulang foto yang sudah di-preload dan menunda LCP.
+      ...["/hero/:path*", "/brand/:path*"].map((source) => ({
+        source,
+        headers: [{ key: "Cache-Control", value: "public, max-age=86400, stale-while-revalidate=604800" }],
+      })),
     ];
   },
 };

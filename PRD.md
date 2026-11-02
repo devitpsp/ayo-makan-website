@@ -513,6 +513,8 @@ Supaya kuota foto tidak habis sebelum hari-H:
 ## 10. Desain: Arah Visual "Sambal Segar"
 
 > Nilai visual lengkap (token CSS, ukuran, resep komponen, gerak, verifikasi) ada di [`DESIGN.md`](DESIGN.md), dan file itu **otoritatif**. Bagian ini ringkasan produk. Jika berbeda, ikuti DESIGN.md lalu perbarui bagian ini.
+>
+> **Pembaruan 2 November 2026:** arah visual diganti owner menjadi **"Oranye Bersih" (DESIGN.md v2.0)**: gaya bersih editorial, hero setinggi layar berlatar kuning cerah dengan nama menu raksasa oranye di belakang foto hidangan, warna mengikuti logo, tanpa garis tebal/bayangan keras/badge ledakan. Subbagian 10.1 sampai 10.10 di bawah mencatat arah lama "Sambal Segar" sebagai riwayat; untuk nilai visual yang berlaku, pakai DESIGN.md v2.0.
 
 ### 10.1 Design Read
 
