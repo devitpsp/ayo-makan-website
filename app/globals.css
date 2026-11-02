@@ -1,0 +1,655 @@
+@import "tailwindcss";
+
+/*
+ * Token "Oranye Bersih" v2, sumber kebenaran: DESIGN.md bagian 2. Dial ENERGY 2 / RHYTHM 2 / MOTION 2.
+ * Nama token lama (--cabai, --telur) dipertahankan agar komponen tidak dibongkar; nilainya mengikuti arah baru:
+ * --cabai = warna aksi (merah logo), --telur = aksen lembut (oranye muda), --oranye = latar hero.
+ * Tema default TERANG dan tidak mengikuti sistem; gelap hanya lewat saklar (data-theme="dark").
+ * Alias semantik dideklarasikan ulang di blok gelap karena var() di-resolve di elemen deklarasinya.
+ */
+:root {
+  --oranye: #ffd54a; /* latar hero kuning cerah (pilihan owner); tinta di atasnya 12,85:1 */
+  --kata-raksasa: #e85a1e; /* kata raksasa oranye pekat, dekoratif (aria-hidden); teks tinta yang menimpanya 5,11:1 */
+  --cabai: #c31615; /* aksi: tombol primer, tautan. Putih di atasnya 6,09:1 */
+  --on-cabai: #ffffff;
+  --telur: #ffe9b0; /* aksen lembut kuning muda: avatar. Tinta di atasnya 15,16:1 */
+  --aktif: #ffd54a; /* chip/tab terpilih: kuning hero, teks tinta 12,85:1 */
+  --on-aktif: #1c1410;
+  --tinta: #1c1410;
+  --kertas: #fffaeb; /* krem kekuningan, menyambung ke hero kuning: tinta 17,4:1, redup 6,23:1 */
+  --surface: #ffffff;
+  --redup: #6b5b4e;
+  --garis: #f1e6cf; /* pemisah dekoratif */
+  --garis-keras: #9a8673; /* batas kontrol (input, chip): 3,48:1 di putih, 3,27:1 di krem */
+  --garis-kartu: transparent;
+  --bayangan: rgb(28 20 16 / 0.08);
+  --bayangan-naik: rgb(28 20 16 / 0.14);
+  --fokus: #1c1410;
+  --link: #c31615;
+  --bintang: #d94e00; /* 4,17:1 di putih */
+
+  --bg-hero: var(--oranye);
+  --on-hero: #1c1410;
+  --header-box: transparent;
+  --on-header-box: #1c1410;
+
+  /* Pengganti foto per kategori (DESIGN 6.6) */
+  --tint-makanan: #ffe2cf;
+  --tint-minuman: #ffe9b0;
+  --tint-jajanan: #f3e6d6;
+  --on-tint-makanan: #9a3412;
+  --on-tint-minuman: #1c1410;
+  --on-tint-jajanan: #1c1410;
+
+  --buka: #1e7a3c; /* titik status Buka; informasi tetap tertulis */
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --oranye: #211813;
+  --kata-raksasa: #8a3a12; /* dekoratif */
+  --cabai: #ffc94a; /* tombol gelap kuning: teks tinta di atasnya 11,85:1 */
+  --on-cabai: #1c1410;
+  --telur: #3d2e14;
+  --aktif: #ffc94a;
+  --on-aktif: #1c1410;
+  --kertas: #1a1411;
+  --surface: #2a201b;
+  --tinta: #fbefdf;
+  --redup: #b8a898;
+  --garis: #3a2e27;
+  --garis-keras: #7a6a5c; /* 3,06:1 di surface */
+  --garis-kartu: transparent;
+  --bayangan: rgb(0 0 0 / 0.35);
+  --bayangan-naik: rgb(0 0 0 / 0.5);
+  --fokus: #ffc94a;
+  --link: #ffc94a;
+  --bintang: #ff8a3d;
+
+  --bg-hero: var(--oranye);
+  --on-hero: #fbefdf;
+  --header-box: transparent;
+  --on-header-box: #fbefdf;
+
+  --tint-makanan: #3d2414;
+  --tint-minuman: #3d3018;
+  --tint-jajanan: #3a3027;
+  --on-tint-makanan: #ff8a3d;
+  --on-tint-minuman: #fbefdf;
+  --on-tint-jajanan: #fbefdf;
+
+  --buka: #5ccb82;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-cabai: var(--cabai);
+  --color-on-cabai: var(--on-cabai);
+  --color-telur: var(--telur);
+  --color-tinta: var(--tinta);
+  --color-kertas: var(--kertas);
+  --color-surface: var(--surface);
+  --color-redup: var(--redup);
+  --color-garis: var(--garis);
+  --color-header-box: var(--header-box);
+  --color-on-header-box: var(--on-header-box);
+  --font-sans: var(--font-jakarta), system-ui, sans-serif;
+  --font-display: var(--font-jakarta), system-ui, sans-serif;
+}
+
+/* Dasar dan komponen berada di @layer agar utilitas Tailwind (pl-11, w-full, dst.) tetap bisa menimpanya. */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+    /* Fokus keyboard dan tautan # tidak boleh tertutup header melekat (WCAG 2.4.11). */
+    scroll-padding-top: 88px;
+  }
+
+  /* <main> menerima fokus programatik dari tautan "Lewati ke konten"; bukan kontrol, jadi tanpa cincin. */
+  main[tabindex="-1"]:focus {
+    outline: none;
+  }
+
+  body {
+    background: var(--kertas);
+    color: var(--tinta);
+    font-family: var(--font-jakarta), system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    overflow-x: hidden;
+  }
+
+  a {
+    color: var(--link);
+  }
+
+  /* Cincin fokus melewati bayangan keras (DESIGN 11) */
+  :focus-visible {
+    outline: 3px solid var(--fokus);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  /* Tautan lewati: di luar layar sampai difokus lewat keyboard (Tab pertama), WCAG 2.4.1 */
+  .skip-link {
+    position: fixed;
+    left: 12px;
+    top: -80px;
+    z-index: 100;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--tinta);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--tinta);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .skip-link:focus {
+    top: 12px;
+  }
+
+  /* Judul: Plus Jakarta Sans 800 (bobot tertebal yang ada; 900 akan ditebalkan palsu oleh browser) */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  .tabnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Tombol bersih (DESIGN v2 bagian 4): tanpa bayangan; ditekan = mengecil 2%. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0 1.25rem;
+    border: 1.5px solid var(--garis-keras);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--tinta);
+    font-weight: 600;
+    font-size: 15px;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+      transform 80ms ease-out,
+      background-color 150ms ease-out;
+  }
+  .btn:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    border-color: transparent;
+    background: var(--cabai);
+    color: var(--on-cabai);
+  }
+  @media (hover: hover) {
+    .btn-primary:hover:not(:disabled) {
+      background: color-mix(in oklab, var(--cabai) 88%, black);
+    }
+  }
+  /* Tombol putih tanpa garis, untuk di atas latar oranye (MENU, panah carousel) */
+  .btn-telur {
+    border-color: transparent;
+    background: var(--surface);
+    color: var(--tinta);
+  }
+  .btn-square {
+    width: 44px;
+    padding: 0;
+  }
+  /* Tombol ikon tanpa garis (simpan di kartu) */
+  .btn-bare {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--tinta);
+    cursor: pointer;
+  }
+
+  /* Kolom input */
+  .field {
+    width: 100%;
+    min-height: 52px;
+    padding: 0 1rem;
+    border: 1.5px solid var(--garis-keras);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--tinta);
+    font-size: 16px; /* 16px eksplisit: mencegah zoom otomatis iOS */
+  }
+  .field::placeholder {
+    color: var(--redup);
+    opacity: 1;
+  }
+
+  /* Chip filter: satu-satunya bentuk pil (fungsinya toggle). Tinggi 36, area sentuh 44. */
+  .chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 36px;
+    padding: 0 1rem;
+    border: 1.5px solid var(--garis-keras);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--tinta);
+    font-weight: 600;
+    font-size: 14px;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .chip::after {
+    content: "";
+    position: absolute;
+    inset: -4px 0;
+  }
+  .chip[aria-pressed="true"],
+  .chip[data-active="true"] {
+    border-color: var(--on-aktif);
+    background: var(--aktif);
+    color: var(--on-aktif);
+  }
+
+  /*
+   * Petunjuk pencarian (riwayat dan saran): kotak bersudut 10px bergaris tipis, BUKAN pil.
+   * Pil bergaris tebal hanya untuk chip filter, supaya pengguna bisa membedakan "ubah filter" dari "isi kata kunci".
+   * Area sentuh 44px diperluas lewat ::after milik tombolnya sendiri (tidak menutupi tombol tetangga).
+   */
+  .hint {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    border: 1.5px solid var(--redup);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--tinta);
+    font-size: 14px;
+    font-weight: 400;
+    white-space: nowrap;
+  }
+  .hint-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 34px;
+    padding: 0 0.75rem;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+  }
+  .hint-btn::after {
+    content: "";
+    position: absolute;
+    inset: -5px 0;
+  }
+  .hint-x {
+    width: 34px;
+    padding: 0;
+    justify-content: center;
+    color: var(--redup);
+  }
+  .hint-x::after {
+    inset: -5px -5px;
+  }
+  @media (hover: hover) {
+    .hint-btn:hover {
+      text-decoration: underline;
+    }
+  }
+
+  /* Tab kategori: satu kotak, 3 segmen sama lebar (DESIGN 8) */
+  .segments {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    overflow: hidden;
+    border: 1.5px solid var(--garis-keras);
+    border-radius: 12px;
+    background: var(--surface);
+  }
+  .segment {
+    min-height: 44px;
+    border: 0;
+    background: transparent;
+    color: var(--tinta);
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .segment + .segment {
+    border-left: 1.5px solid var(--garis-keras);
+  }
+  .segment[aria-selected="true"] {
+    background: var(--aktif);
+    color: var(--on-aktif);
+  }
+
+  /* Pilihan berbentuk kotak bergaris (daftar kampus, thumbnail) */
+  .tab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 1rem;
+    border: 1.5px solid var(--garis-keras);
+    border-radius: 12px;
+    background: var(--surface);
+    color: var(--tinta);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .tab[aria-pressed="true"] {
+    border-color: var(--on-aktif);
+    background: var(--aktif);
+    color: var(--on-aktif);
+  }
+
+  /* Kartu hasil dan ulasan: tanpa garis, bayangan lembut sebagai penanda elevasi (DESIGN v2 bagian 4) */
+  .card-ink {
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow:
+      0 1px 2px var(--bayangan),
+      0 8px 24px var(--bayangan);
+    overflow: hidden;
+    transition:
+      transform 150ms ease-out,
+      box-shadow 150ms ease-out;
+  }
+  .card-link:has(a:active) {
+    transform: scale(0.99);
+  }
+  @media (hover: hover) {
+    .card-link:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 2px 4px var(--bayangan),
+        0 16px 32px var(--bayangan-naik);
+    }
+    .card-link:has(a:active) {
+      transform: scale(0.99);
+    }
+  }
+
+  /* Panel melayang: menu, header melekat */
+  .panel-ink {
+    box-shadow: 0 12px 32px var(--bayangan-naik);
+  }
+
+  /* Label harga di pojok foto: putih, tanpa rotasi (DESIGN v2 6.2) */
+  .sticker-price {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 8px;
+    background: rgb(255 255 255 / 0.94);
+    color: #1c1410;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.3;
+  }
+
+  /* Pengganti foto per kategori */
+  .tint-makanan {
+    background: var(--tint-makanan);
+    color: var(--on-tint-makanan);
+  }
+  .tint-minuman {
+    background: var(--tint-minuman);
+    color: var(--on-tint-minuman);
+  }
+  .tint-jajanan {
+    background: var(--tint-jajanan);
+    color: var(--on-tint-jajanan);
+  }
+
+  /* Kerangka: tanpa garis tinta supaya jelas belum siap (DESIGN 8) */
+  .skeleton-card {
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--surface);
+  }
+  .skeleton-bar {
+    background: var(--garis);
+  }
+
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Logo owner (DESIGN v2 6.7): utuh, tanpa garis/bayangan; bidang krem kecil agar pin oranye tidak tenggelam di latar oranye */
+  .logo-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    background: #fff7e8;
+    text-decoration: none;
+  }
+  .logo-badge img {
+    height: 100%;
+    width: auto;
+  }
+  .logo-badge-full {
+    padding: 6px 10px;
+  }
+  .logo-badge-mark {
+    width: 44px;
+    height: 44px;
+    padding: 5px;
+    border-radius: 999px;
+  }
+
+  /* Bottom sheet dari <dialog>: fokus terkunci dan Escape ditangani browser */
+  .sheet {
+    margin: auto auto 0;
+    width: 100%;
+    max-width: 560px;
+    max-height: 70vh;
+    padding: 0;
+    border: 0;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 32px var(--bayangan-naik);
+    background: var(--surface);
+    color: var(--tinta);
+  }
+  .sheet[open] {
+    animation: slide-up 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .sheet::backdrop {
+    background: rgb(28 20 16 / 0.45);
+  }
+
+  /* Atribusi teks Google Maps (fallback resmi saat logo belum dipasang) */
+  .gm-attr {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    background: #ffffff;
+    color: #5e5e5e;
+    font-family: var(--font-roboto), Roboto, Arial, sans-serif;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 1.2;
+  }
+
+  .field-label {
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  /* Hero editorial (DESIGN v2 7.2): latar oranye penuh, kata raksasa di belakang foto */
+  .hero-panel {
+    background: var(--bg-hero);
+    color: var(--on-hero);
+  }
+  /* Batas kolom cari di atas kuning: #9a8673 hanya 2,47:1, pakai redup (>= 3:1 di kuning) */
+  .hero-panel .field {
+    border-color: var(--redup);
+  }
+  .giant-word {
+    color: var(--kata-raksasa);
+    font-weight: 800;
+    line-height: 0.82;
+    letter-spacing: -0.04em;
+    text-transform: uppercase;
+    text-align: center;
+    user-select: none;
+    pointer-events: none;
+  }
+  .hero-slide {
+    transition: opacity 250ms ease;
+  }
+  .hero-photo {
+    filter: drop-shadow(0 24px 28px rgb(28 20 16 / 0.28));
+  }
+}
+
+/* Gerak (DESIGN 10) */
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+@keyframes badge-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.anim-menu {
+  animation: slide-down 180ms ease-out;
+}
+.anim-header {
+  animation: slide-down 150ms ease-out;
+}
+.anim-badge {
+  animation: badge-in 150ms ease-out;
+}
+.anim-fade {
+  animation: fade-in 200ms ease-out;
+}
+.anim-toast {
+  animation: toast-in 150ms ease-out;
+}
+.anim-skeleton {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Ukuran kata raksasa hero: dihitung dari panjang nama menu (--n semua huruf, --m kata terpanjang). DESIGN v2 7.2 */
+.giant-word {
+  font-size: min(calc((100vw - 32px) / (var(--m) * 0.7)), 128px);
+}
+@media (min-width: 768px) {
+  .giant-word {
+    font-size: min(calc((100vw - 64px) / (var(--m) * 0.7)), 200px);
+  }
+}
+@media (min-width: 1024px) {
+  .giant-word {
+    font-size: min(calc((min(100vw, 1360px) - 80px) / (var(--n) * 0.7)), 340px);
+    white-space: nowrap;
+  }
+}
+
+/* Kata besar samar di state kosong/offline (DESIGN v2 6.1): dekoratif, aria-hidden */
+.state-word {
+  color: var(--cabai);
+  opacity: 0.22;
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 0.85;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  text-wrap: balance;
+}
