@@ -4,9 +4,6 @@ import { useRef, useState, type CSSProperties, type KeyboardEvent, type PointerE
 import { ArrowLeft, ArrowRight, CaretDoubleDown } from "@phosphor-icons/react";
 import { HERO_SLIDES } from "@/config/hero-slides";
 import { ev } from "@/lib/client/analytics";
-import { useRecentSearches } from "@/lib/client/recent-searches";
-import { scrollToResults, setSearchSource } from "@/lib/client/scroll";
-import { useSearchState } from "@/lib/client/search-state";
 import { SearchBar } from "./search-bar";
 import { TopBar } from "./top-bar";
 
@@ -16,8 +13,9 @@ const title = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
 const pad = (n: number) => String(n).padStart(2, "0");
 
 /**
- * Hero "Menu andalan" (PRD 10.6.1, DESIGN v2 7.2): carousel hidangan, tiap slide menjalankan pencarian.
- * Tanpa putar otomatis. Pindah lewat tombol panah, indikator, geser, atau panah keyboard.
+ * Hero "Menu andalan" (PRD 10.6.1, DESIGN v2 7.2): carousel hidangan sebagai etalase.
+ * Foto besar di kiri, nama menu raksasa di kanan agar tetap terbaca. Kolom cari umum dan tidak
+ * mengikuti slide (keputusan owner 3 November 2026). Tanpa putar otomatis.
  */
 export function Hero() {
   const [i, setI] = useState(0);
@@ -25,8 +23,6 @@ export function Hero() {
   const [warm, setWarm] = useState(false);
   // Animasi masuk foto hanya saat pengguna ganti slide, bukan saat halaman pertama dibuka (menunda LCP).
   const [moved, setMoved] = useState(false);
-  const { set } = useSearchState();
-  const { add: addRecent } = useRecentSearches();
   const touch = useRef<number | null>(null);
   const slide = HERO_SLIDES[i];
 
@@ -59,14 +55,6 @@ export function Hero() {
     if (Math.abs(dx) >= SWIPE_PX) go(dx < 0 ? 1 : -1, "geser");
   };
 
-  const runSearch = () => {
-    setSearchSource("hero");
-    addRecent(slide.keyword);
-    ev("hero_slide", { slide: slide.id, action: "klik_cari" });
-    set({ q: slide.keyword, cat: slide.cat }, { push: true });
-    scrollToResults();
-  };
-
   const controls = (where: "stage" | "panel") => (
     <div className={`flex items-center gap-2 ${where === "stage" ? "lg:hidden" : "hidden lg:flex"}`}>
       <button type="button" className="btn btn-telur btn-square h-12 w-12 shrink-0 rounded-full" onClick={() => go(-1)} aria-label="Menu sebelumnya">
@@ -80,7 +68,6 @@ export function Hero() {
             aria-label={`Lihat menu ${idx + 1} dari ${COUNT}: ${title(s.badge)}`}
             aria-current={idx === i}
             onClick={() => goTo(idx, "tombol")}
-            // Lebar ikut sisa ruang (maks 44 px) agar 6 titik muat di 360 px.
             className="grid h-11 max-w-11 flex-1 place-items-center"
           >
             <span
@@ -108,7 +95,10 @@ export function Hero() {
           onKeyDown={onKey}
           className="relative mt-1 outline-offset-4 [--stage-h:max(200px,calc(100svh-340px))] md:[--stage-h:max(380px,calc(100svh-420px))] lg:mt-0 lg:[--stage-h:max(460px,calc(100svh-152px))]"
         >
-          {/* Panggung: nomor slide, kata raksasa (dekoratif), foto hidangan di tengah (DESIGN v2 7.2) */}
+          {/*
+            Panggung (DESIGN v2 7.2, susunan awal dipulihkan atas permintaan owner 3 Nov 2026):
+            nomor slide kiri atas, nama menu raksasa rata tengah, foto di tengah di depannya.
+          */}
           <div
             className="relative h-[var(--stage-h)] touch-pan-y select-none"
             onPointerDown={onDown}
@@ -135,7 +125,7 @@ export function Hero() {
                   aria-hidden={!active}
                   className={`hero-slide absolute inset-0 ${active ? "opacity-100" : "pointer-events-none opacity-0"}`}
                 >
-                  {/* Kata raksasa: dekoratif, nama menu sudah terbaca di label slide dan tombol */}
+                  {/* Nama menu raksasa di belakang foto, rata tengah (keputusan owner 3 Nov 2026). Dekoratif: nama sudah terbaca di label slide. */}
                   <p
                     aria-hidden="true"
                     className="giant-word absolute inset-x-0 top-1/2 -translate-y-1/2"
@@ -166,7 +156,7 @@ export function Hero() {
                       <div
                         role="img"
                         aria-label={s.alt}
-                        className="mx-auto grid aspect-square h-full place-items-center rounded-full border-2 border-dashed border-[var(--on-hero)] p-2 text-center"
+                        className="grid aspect-square h-full place-items-center rounded-full border-2 border-dashed border-[var(--on-hero)] p-2 text-center"
                       >
                         <span className="text-sm font-semibold lg:text-lg">[FOTO: {s.keyword}]</span>
                       </div>
@@ -178,13 +168,11 @@ export function Hero() {
 
             {/* HP: panah di bawah panggung agar tetap terlihat di layar pertama */}
             <div className="absolute inset-x-0 bottom-0 z-20">{controls("stage")}</div>
-
           </div>
 
           {/*
             Satu headline dan satu kolom cari untuk semua lebar (id #cari-hero dipakai scripts/verify-ui.mjs).
-            HP/tablet: mengalir di bawah panggung. Desktop: diposisikan absolut di kiri bawah dan kanan tengah panggung.
-            Tinggi panggung = --stage-h (hero setinggi layar penuh); posisi desktop di bawah memakai variabel yang sama.
+            HP/tablet: mengalir di bawah panggung. Desktop: tagline kiri bawah, kolom cari kanan tengah panggung.
           */}
           <div className="mt-3 space-y-3 md:mx-auto md:max-w-xl lg:m-0 lg:max-w-none lg:space-y-0">
             <div className="space-y-2 lg:absolute lg:left-0 lg:top-[calc(var(--stage-h)-32px)] lg:z-20 lg:max-w-[300px] lg:-translate-y-full">
@@ -198,10 +186,7 @@ export function Hero() {
               </p>
             </div>
             <div className="space-y-3 lg:absolute lg:right-0 lg:top-[calc(var(--stage-h)/2)] lg:z-20 lg:w-[340px] lg:-translate-y-1/2">
-              <SearchBar id="cari-hero" scrollOnSubmit prefill={slide.keyword} />
-              <button type="button" className="btn btn-primary min-h-[48px] w-full" onClick={runSearch}>
-                {slide.button}
-              </button>
+              <SearchBar id="cari-hero" scrollOnSubmit placeholder="Mau makan apa hari ini?" submitLabel="Cari di sekitar" />
               {controls("panel")}
             </div>
           </div>

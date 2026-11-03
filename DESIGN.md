@@ -1,6 +1,6 @@
 # Ayo Makan: kontrak implementasi visual
 
-> Versi 2.0 "Oranye Bersih" · 2 November 2026 · Menggantikan v1.2 "Sambal Segar" (arsip: `DESIGN-v1-sambal-segar.md`).
+> Versi 2.1 "Oranye Bersih" · 3 November 2026 · Menggantikan v1.2 "Sambal Segar" (arsip: `DESIGN-v1-sambal-segar.md`).
 >
 > Sumber arah, semuanya pilihan owner: gaya bersih editorial untuk seluruh app (referensi hero dengan kata raksasa di belakang produk), hero setinggi layar penuh, latar hero **kuning cerah** dengan kata raksasa **oranye pekat** (owner menolak oranye penuh karena terlalu gelap), warna lain mengikuti logo (merah, oranye, kuning, krem), logo utuh tanpa stiker, kartu dan tombol tanpa garis tebal atau bayangan keras, satu keluarga font Plus Jakarta Sans.
 >
@@ -124,6 +124,10 @@ Phosphor Icons, bobot Bold, `currentColor`. Hanya ikon yang bermakna (cari, loka
 
 Nama menu dalam huruf kapital raksasa di belakang foto hidangan hero, warna `--kata-raksasa`. Gaya yang sama (lebih kecil, merah 22% opasitas, class `.state-word`) dipakai di state kosong dan offline ("BELUM KETEMU", "OFFLINE"). Selalu `aria-hidden`; informasinya sudah ada di teks lain.
 
+### 6.1b Grain latar hero
+
+Tekstur grain sangat halus di latar hero (pilihan owner 3 Nov 2026) agar latar tidak datar, kesan kertas cetak. `.hero-panel::before`: SVG `feTurbulence` 160 px diulang, `--grain-opacity` 0,22 + `multiply` (terang), 0,1 + `screen` dengan noise dibalik (gelap). Selalu di bawah konten (`isolation: isolate`, `z-index: -1`), tidak memengaruhi kontras teks. Tanpa file gambar tambahan; diizinkan CSP `img-src data:`.
+
 ### 6.2 Label harga
 
 Kotak putih kecil di pojok foto kartu, teks tinta 700 14 px, tanpa rotasi. Tampil hanya bila Google punya data harga.
@@ -133,7 +137,10 @@ Kotak putih kecil di pojok foto kartu, teks tinta 700 14 px, tanpa rotasi. Tampi
 - Foto hidangan tanpa latar (cutout), di `public/hero/*.webp`, sisi terpanjang maks 1.000 px.
 - Sumber dan riwayat: `assets/hero-v2/` (hasil hapus latar rembg dari foto owner, aslinya di `original/`), `assets/hero-v1/` (versi sebelumnya).
 - Bayangan lembut di bawah foto (`.hero-photo`: `drop-shadow(0 24px 28px)`) agar makanan terasa diletakkan, bukan melayang.
-- Belum ada versi baru: seblak, mie ayam, nasi rames (memakai foto v1).
+- Slide aktif: seblak, nasi rames, mie ayam, bakso. Ayam geprek dan es teh dilepas (3 Nov 2026) karena hasil hapus latarnya kurang rapi.
+- Ruang transparan di sekeliling hidangan dipotong agar foto mengisi kotaknya.
+- URL foto memakai versi (`?v=2` di `config/hero-slides.ts`): `/hero` di-cache 1 hari, jadi naikkan versi setiap file foto diganti.
+- Resolusi masih rendah untuk tampilan besar (nasi rames 298 px, mie ayam 378 px, seblak 442 px, bakso 618 px): akan tampak buram di desktop besar; butuh foto baru ≥ 1.200 px.
 
 ### 6.4 Pengganti foto tempat
 
@@ -167,13 +174,17 @@ Struktur (`components/hero.tsx`): bilah atas → panggung → headline + kolom c
   - HP: `max(200px, 100svh - 340px)`
   - Tablet: `max(380px, 100svh - 420px)`
   - Desktop: `max(460px, 100svh - 152px)`
-- Isi panggung: nomor slide kiri atas, kata raksasa di tengah vertikal, foto di tengah (lebar 78% HP, 60% tablet, 42% desktop) di atas kata raksasa.
-- **Ukuran kata raksasa** (`.giant-word`, `--n` = jumlah huruf nama, `--m` = kata terpanjang):
-  - HP: `min((100vw - 32px) / (m × 0.7), 128px)`, nama dua kata dipecah dua baris
+- **Susunan awal dipulihkan** (permintaan owner 3 Nov 2026, setelah mencoba foto di kiri dan lapis garis nama menu di depan foto):
+  - Nomor slide kiri atas (36 px HP, 72 px desktop).
+  - Nama menu raksasa rata tengah, di tengah vertikal panggung; HP/tablet satu kata per baris, desktop satu baris.
+  - Foto di tengah, di depan nama menu: lebar 78% HP, 60% tablet, 42% desktop, tinggi 94% panggung.
+- **Ukuran kata raksasa** (`--n` = jumlah huruf nama, `--m` = kata terpanjang):
+  - HP: `min((100vw - 32px) / (m × 0.7), 128px)`
   - Tablet: `min((100vw - 64px) / (m × 0.7), 200px)`
-  - Desktop: `min((min(100vw, 1360px) - 80px) / (n × 0.7), 340px)`, satu baris
-- **HP/tablet:** panah carousel di bawah panggung; di bawahnya headline miring, satu kalimat pendukung, kolom cari, tombol "Cari ... di sekitar".
-- **Desktop:** headline + garis pendek + teks pendukung di kiri bawah panggung (maks 300 px); kolom cari + tombol + kontrol carousel di kanan tengah (340 px); "Lihat hasil" di bawah tengah.
+  - Desktop: `min((min(100vw, 1360px) - 80px) / (n × 0.7), 340px)`
+- **HP/tablet:** panah carousel di bawah panggung; di bawahnya headline miring, satu kalimat pendukung, kolom cari, tombol "Cari di sekitar".
+- **Desktop:** garis pendek + headline + teks pendukung di kiri bawah panggung (maks 300 px); kolom cari + tombol + kontrol carousel di kanan tengah (340 px).
+- **Kolom cari umum, tidak mengikuti slide** (keputusan owner 3 Nov 2026): placeholder "Mau makan apa hari ini?", tombol "Cari di sekitar" mengirim isi kolom; kolom kosong = mode jelajah. Carousel hanya etalase.
 - Hanya satu headline dan satu kolom cari (`#cari-hero`) untuk semua lebar; desktop memposisikannya absolut.
 - **Performa:** foto slide pertama di-preload dari server (`app/page.tsx`); foto slide lain dimuat setelah foto pertama selesai; animasi masuk foto hanya saat pengguna ganti slide. `/hero/*` dan `/brand/*` di-cache 1 hari (`next.config.ts`).
 
@@ -238,5 +249,6 @@ Tidak ada putar otomatis, scroll-reveal, atau parallax. `prefers-reduced-motion`
 
 ## Changelog
 
+- **2.1** (3 November 2026): grain halus di latar hero (6.1b); susunan hero awal dipulihkan setelah percobaan foto kiri dan lapis garis; foto besar di depan nama menu rata tengah (lapis garis di depan foto dicoba lalu ditolak owner), kolom cari umum (tidak mengikuti slide), slide ayam geprek dan es teh dilepas, URL foto berversi.
 - **2.0** (2 November 2026): arah "Oranye Bersih" menggantikan "Sambal Segar". Hero editorial setinggi layar (kuning + kata raksasa oranye), palet dari logo, komponen tanpa garis tebal/bayangan keras, logo polos di bidang krem, foto hero v2 hasil hapus latar, preload LCP.
 - 1.x: lihat `DESIGN-v1-sambal-segar.md`.

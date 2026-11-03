@@ -30,6 +30,8 @@
 
   --bg-hero: var(--oranye);
   --on-hero: #1c1410;
+  --grain-opacity: 0.22;
+  --grain-blend: multiply;
   --header-box: transparent;
   --on-header-box: #1c1410;
 
@@ -68,6 +70,8 @@
 
   --bg-hero: var(--oranye);
   --on-hero: #fbefdf;
+  --grain-opacity: 0.1;
+  --grain-blend: screen;
   --header-box: transparent;
   --on-header-box: #fbefdf;
 
@@ -501,8 +505,26 @@
 
   /* Hero editorial (DESIGN v2 7.2): latar oranye penuh, kata raksasa di belakang foto */
   .hero-panel {
+    position: relative;
+    isolation: isolate; /* ::before z-index -1 tetap di atas latar hero, di bawah semua konten */
     background: var(--bg-hero);
     color: var(--on-hero);
+  }
+  /* Grain halus (pilihan owner 3 Nov 2026): latar tidak datar, kesan kertas cetak. SVG noise 160px diulang. */
+  .hero-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: var(--grain-opacity);
+    mix-blend-mode: var(--grain-blend);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.6 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 160px 160px;
+  }
+  /* Latar gelap: noise hitam tidak terlihat, jadi dibalik menjadi titik terang tipis */
+  :root[data-theme="dark"] .hero-panel::before {
+    filter: invert(1);
   }
   /* Batas kolom cari di atas kuning: #9a8673 hanya 2,47:1, pakai redup (>= 3:1 di kuning) */
   .hero-panel .field {
@@ -628,6 +650,7 @@
 
 /* Ukuran kata raksasa hero: dihitung dari panjang nama menu (--n semua huruf, --m kata terpanjang). DESIGN v2 7.2 */
 .giant-word {
+  text-align: center;
   font-size: min(calc((100vw - 32px) / (var(--m) * 0.7)), 128px);
 }
 @media (min-width: 768px) {

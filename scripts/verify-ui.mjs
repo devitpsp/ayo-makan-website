@@ -153,15 +153,16 @@ for (const theme of ["light", "dark"]) {
   await page.keyboard.press("ArrowRight");
   ok("hero: panah kanan di kolom cari TIDAK mengganti slide", (await h1()) === before);
 
-  await page.getByRole("button", { name: /^Lihat menu 4 dari 6/ }).click();
-  ok("hero: indikator bisa diketuk (lompat ke slide 4)", (await h1()).includes("KUAHNYA") || (await h1()).toLowerCase().includes("kuahnya"));
-  await page.getByRole("button", { name: /^Lihat menu 1 dari 6/ }).click();
+  await page.getByRole("button", { name: /^Lihat menu 4 dari 4/ }).click();
+  ok("hero: indikator bisa diketuk (lompat ke slide 4)", (await h1()).toLowerCase().includes("kuahnya"));
+  await page.getByRole("button", { name: /^Lihat menu 1 dari 4/ }).click();
 
-  // tombol slide menjalankan pencarian
-  await page.getByRole("button", { name: /^Cari .* di sekitar$/ }).click();
-  await page.waitForURL(/q=/);
-  ok("hero: tombol slide mengisi ?q= dan kategori", /q=/.test(page.url()), page.url().replace(BASE, ""));
-  ok("hero: kolom cari terisi kata kunci", (await page.locator("#cari-hero").inputValue()).length > 1);
+  // Kolom cari hero umum (keputusan owner 3 Nov 2026): tidak mengikuti slide, tombol mengirim isi kolom
+  ok("hero: kolom cari kosong, tidak mengikuti slide", (await page.locator("#cari-hero").inputValue()) === "");
+  await page.locator("#cari-hero").fill("seblak");
+  await page.getByRole("button", { name: "Cari di sekitar" }).click();
+  await page.waitForURL(/q=seblak/);
+  ok("hero: ketik + tombol 'Cari di sekitar' mengisi ?q=", /q=seblak/.test(page.url()), page.url().replace(BASE, ""));
 
   // MENU HP
   const menuBtn = page.getByRole("button", { name: /menu$/i }).first();
@@ -498,7 +499,7 @@ for (const [name, geo, perms, expect] of [
   await page.context().close();
 }
 
-// 11. Regresi: kolom cari hero mengikuti slide aktif (tanpa mencari, tanpa menimpa ketikan)
+// 11. Regresi: kolom cari hero umum, tidak mengikuti slide (keputusan owner 3 Nov 2026)
 {
   const page = await newPage(390, 844, "light", { mock: false });
   const qs = [];
@@ -506,24 +507,22 @@ for (const [name, geo, perms, expect] of [
   await page.goto(BASE, { waitUntil: "networkidle" });
   const inp = page.locator("#cari-hero");
   const next = page.getByRole("button", { name: "Menu berikutnya" });
+  const start = qs.length;
   await next.click();
-  ok("slide 2: kolom cari terisi 'nasi rames'", (await inp.inputValue()) === "nasi rames", await inp.inputValue());
-  await page.getByRole("button", { name: "Cari nasi rames di sekitar" }).click();
-  await urlHas(page, /q=nasi/);
-  await page.waitForTimeout(300);
-  const afterBtn = qs.length;
   await next.click();
-  ok("slide 3 setelah mencari 'nasi rames': kolom ikut jadi 'mie ayam' (bukan tertinggal)", (await inp.inputValue()) === "mie ayam", await inp.inputValue());
-  await page.waitForTimeout(1200);
-  ok("mengganti slide TIDAK memicu pencarian (hanya tombol/Enter)", qs.length === afterBtn && /q=nasi/.test(page.url()), `${qs.length - afterBtn} panggilan, URL ${page.url().replace(BASE, "")}`);
-  await inp.click(); await inp.press("Control+A"); await page.keyboard.type("soto");
+  await page.waitForTimeout(1000);
+  ok("ganti slide: kolom cari tetap kosong", (await inp.inputValue()) === "", await inp.inputValue());
+  ok("ganti slide TIDAK memicu pencarian", qs.length === start, `${qs.length - start} panggilan`);
+  ok("placeholder kolom cari hero umum", (await inp.getAttribute("placeholder")) === "Mau makan apa hari ini?", await inp.getAttribute("placeholder"));
+  await inp.click(); await page.keyboard.type("soto");
   await next.click(); // sebelum debounce 700 ms
   ok("ketikan pengguna TIDAK ditimpa saat slide berganti", (await inp.inputValue()) === "soto", await inp.inputValue());
   await page.waitForTimeout(1200);
-  ok("ketikan pengguna tetap dicari setelah jeda", qs.at(-1) === "soto", JSON.stringify(qs.slice(afterBtn)));
-  await page.getByRole("button", { name: /^Lihat menu 6 dari 6/ }).click();
-  await page.waitForTimeout(300);
-  ok("indikator ke slide 6: kolom jadi 'es teh'", (await inp.inputValue()) === "es teh", await inp.inputValue());
+  ok("ketikan pengguna tetap dicari setelah jeda", qs.at(-1) === "soto", JSON.stringify(qs.slice(start)));
+  await inp.fill("");
+  await page.getByRole("button", { name: "Cari di sekitar" }).click();
+  await page.waitForTimeout(600);
+  ok("kolom kosong + 'Cari di sekitar' = mode jelajah (tanpa ?q=)", !/[?&]q=/.test(page.url()), page.url().replace(BASE, ""));
   await page.context().close();
 }
 
@@ -712,8 +711,8 @@ for (const [name, geo, perms, expect] of [
   await page.goto(BASE, { waitUntil: "networkidle" });
   const foot = await page.getByRole("link", { name: "Privasi", exact: true }).last().boundingBox();
   ok("#18 tautan footer Privasi >= 44x44", foot.width >= 44 && foot.height >= 44, `${Math.round(foot.width)}x${Math.round(foot.height)}`);
-  const dots = await page.getByRole("button", { name: /^Lihat menu \d dari 6/ }).evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().width)));
-  ok("#18 titik carousel di 390px: lebar >= 36 px dan tinggi 44 px", dots.length === 6 && Math.min(...dots) >= 36, JSON.stringify(dots));
+  const dots = await page.getByRole("button", { name: /^Lihat menu \d dari 4/ }).evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().width)));
+  ok("#18 titik carousel di 390px: lebar >= 36 px dan tinggi 44 px", dots.length === 4 && Math.min(...dots) >= 36, JSON.stringify(dots));
   await page.context().close();
 }
 
