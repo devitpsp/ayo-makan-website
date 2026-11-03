@@ -506,6 +506,7 @@
   /* Hero editorial (DESIGN v2 7.2): latar oranye penuh, kata raksasa di belakang foto */
   .hero-panel {
     position: relative;
+    overflow-x: clip; /* slide yang menunggu diparkir di luar sisi hero untuk transisi; jangan melebarkan halaman */
     isolation: isolate; /* ::before z-index -1 tetap di atas latar hero, di bawah semua konten */
     background: var(--bg-hero);
     color: var(--on-hero);
@@ -540,8 +541,18 @@
     user-select: none;
     pointer-events: none;
   }
+  /* Transisi slide (opacity); gerak per lapis ada di blok "Gerak hero" di bawah */
   .hero-slide {
-    transition: opacity 250ms ease;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 450ms ease;
+  }
+  .hero-slide[data-state="active"] {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .hero-slide[data-state="idle"] {
+    transition: none;
   }
   .hero-photo {
     filter: drop-shadow(0 24px 28px rgb(28 20 16 / 0.28));
@@ -675,4 +686,136 @@
   letter-spacing: -0.04em;
   text-transform: uppercase;
   text-wrap: balance;
+}
+
+/*
+ * Gerak hero dan scroll (DESIGN v2 bagian 8, MOTION 3, pilihan owner 3 Nov 2026).
+ * Tiap gerak di elemen terpisah agar transform tidak saling menimpa:
+ *   .px-word / .px-photo  = parallax kursor (properti translate) + parallax scroll (transform via scroll timeline)
+ *   .giant-word / img     = transisi ganti slide (transform)
+ *   .glyph / img          = pembuka halaman (animation)
+ *   .plate-sway           = ayunan pelan (properti rotate)
+ * Semua dimatikan oleh prefers-reduced-motion di bawah.
+ */
+.hero-stage {
+  --px: 0;
+  --py: 0;
+  --ease-saji: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Ganti slide sinematik: nama meluncur sesuai arah, piring berputar lalu mendarat */
+.hero-slide .giant-word {
+  transition: transform 700ms var(--ease-saji);
+}
+.hero-slide .hero-photo {
+  transition: transform 750ms var(--ease-saji);
+}
+.hero-stage[data-dir="1"] .hero-slide[data-state="idle"] .giant-word { transform: translateX(16%); }
+.hero-stage[data-dir="1"] .hero-slide[data-state="leaving"] .giant-word { transform: translateX(-16%); }
+.hero-stage[data-dir="-1"] .hero-slide[data-state="idle"] .giant-word { transform: translateX(-16%); }
+.hero-stage[data-dir="-1"] .hero-slide[data-state="leaving"] .giant-word { transform: translateX(16%); }
+.hero-stage[data-dir="1"] .hero-slide[data-state="idle"] .hero-photo { transform: translateX(22%) rotate(25deg) scale(0.82); }
+.hero-stage[data-dir="1"] .hero-slide[data-state="leaving"] .hero-photo { transform: translateX(-22%) rotate(-25deg) scale(0.82); }
+.hero-stage[data-dir="-1"] .hero-slide[data-state="idle"] .hero-photo { transform: translateX(-22%) rotate(-25deg) scale(0.82); }
+.hero-stage[data-dir="-1"] .hero-slide[data-state="leaving"] .hero-photo { transform: translateX(22%) rotate(25deg) scale(0.82); }
+.hero-slide[data-state="idle"] .giant-word,
+.hero-slide[data-state="idle"] .hero-photo {
+  transition: none;
+}
+
+/* Pembuka halaman: huruf naik bergelombang, piring turun berputar. Foto hanya digerakkan (tanpa opacity) agar LCP tidak tertunda. */
+.glyph {
+  display: inline-block;
+}
+.is-intro .hero-slide[data-state="active"] .glyph {
+  animation: glyph-in 800ms var(--ease-saji) both;
+  animation-delay: calc(120ms + var(--i) * 45ms);
+}
+.is-intro .hero-slide[data-state="active"] .hero-photo {
+  animation: plate-drop 1100ms var(--ease-saji) both;
+}
+@keyframes glyph-in {
+  from {
+    opacity: 0;
+    transform: translateY(45%) rotate(6deg);
+  }
+}
+@keyframes plate-drop {
+  from {
+    transform: translateY(-14%) rotate(-28deg) scale(0.86);
+  }
+}
+
+/* Ayunan pelan piring (pengganti putaran penuh: foto diambil miring, diputar 360 derajat akan tampak terguling) */
+.plate-sway {
+  animation: plate-sway 9s ease-in-out infinite alternate;
+}
+@keyframes plate-sway {
+  from {
+    rotate: -2.5deg;
+  }
+  to {
+    rotate: 2.5deg;
+  }
+}
+
+/* Parallax kursor: hanya desktop dengan mouse */
+@media (min-width: 1024px) and (hover: hover) and (pointer: fine) {
+  .px-word {
+    translate: calc(var(--px) * 14px) calc(var(--py) * 8px);
+    transition: translate 400ms var(--ease-saji);
+  }
+  .px-photo {
+    translate: calc(var(--px) * -26px) calc(var(--py) * -16px);
+    transition: translate 400ms var(--ease-saji);
+  }
+}
+
+/* Parallax scroll dan kartu muncul saat scroll: CSS scroll-driven animation (browser tanpa dukungan tetap statis) */
+@supports (animation-timeline: scroll()) {
+  .px-word {
+    animation: word-scroll linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 100vh;
+  }
+  .px-photo {
+    animation: photo-scroll linear both;
+    animation-timeline: scroll(root);
+    animation-range: 0 100vh;
+  }
+  @keyframes word-scroll {
+    to {
+      transform: translateY(30%);
+      opacity: 0.25;
+    }
+  }
+  @keyframes photo-scroll {
+    to {
+      transform: translateY(-6%) scale(1.08) rotate(6deg);
+    }
+  }
+}
+@supports (animation-timeline: view()) {
+  .reveal {
+    animation: reveal linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 70%;
+  }
+  @keyframes reveal {
+    from {
+      opacity: 0;
+      transform: translateY(40px);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .px-word,
+  .px-photo {
+    translate: none;
+  }
+  .hero-slide .giant-word,
+  .hero-slide .hero-photo {
+    transform: none !important;
+  }
 }

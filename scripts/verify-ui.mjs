@@ -526,6 +526,28 @@ for (const [name, geo, perms, expect] of [
   await page.context().close();
 }
 
+// 11b. Auto slide (permintaan owner 3 Nov 2026): jalan sendiri, bisa dijeda, tertahan saat fokus di kolom cari
+{
+  const page = await newPage(1440, 900, "light");
+  await page.goto(BASE, { waitUntil: "networkidle" });
+  const h1 = () => page.locator("#hero h1").innerText();
+  const a = await h1();
+  await page.waitForTimeout(2900);
+  const b = await h1();
+  ok("auto slide: slide berganti sendiri setelah 2 detik", a !== b, `${a} -> ${b}`);
+  await page.getByRole("button", { name: "Jeda slide otomatis" }).click();
+  await page.mouse.move(5, 895); // kursor keluar dari panggung agar yang diuji tombol jeda, bukan hover
+  await page.waitForTimeout(6800);
+  ok("auto slide: tombol jeda menghentikan pergantian", (await h1()) === b);
+  ok("auto slide: tombol berganti jadi 'Putar'", await page.getByRole("button", { name: "Putar slide otomatis" }).isVisible());
+  await page.getByRole("button", { name: "Putar slide otomatis" }).click();
+  await page.locator("#cari-hero").focus();
+  const c = await h1();
+  await page.waitForTimeout(6800);
+  ok("auto slide: tertahan saat fokus di kolom cari", (await h1()) === c);
+  await page.context().close();
+}
+
 // 12. Regresi audit #7: GPS telat tidak menimpa kampus; GPS dipanggil sekali saja
 {
   const page = await newPage(390, 844, "light", { mock: true, campus: false });

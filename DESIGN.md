@@ -1,10 +1,10 @@
 # Ayo Makan: kontrak implementasi visual
 
-> Versi 2.1 "Oranye Bersih" · 3 November 2026 · Menggantikan v1.2 "Sambal Segar" (arsip: `DESIGN-v1-sambal-segar.md`).
+> Versi 2.2 "Oranye Bersih" · 3 November 2026 · Menggantikan v1.2 "Sambal Segar" (arsip: `DESIGN-v1-sambal-segar.md`).
 >
 > Sumber arah, semuanya pilihan owner: gaya bersih editorial untuk seluruh app (referensi hero dengan kata raksasa di belakang produk), hero setinggi layar penuh, latar hero **kuning cerah** dengan kata raksasa **oranye pekat** (owner menolak oranye penuh karena terlalu gelap), warna lain mengikuti logo (merah, oranye, kuning, krem), logo utuh tanpa stiker, kartu dan tombol tanpa garis tebal atau bayangan keras, satu keluarga font Plus Jakarta Sans.
 >
-> `Dial: ENERGY 2 / RHYTHM 2 / MOTION 2`
+> `Dial: ENERGY 2 / RHYTHM 2 / MOTION 3` (MOTION naik ke 3 atas permintaan owner 3 Nov 2026: animasi "wah")
 
 File ini **otoritatif untuk semua nilai visual**. Implementasi token ada di `app/globals.css`; jika berbeda, perbaiki salah satunya dan catat di changelog.
 
@@ -175,7 +175,7 @@ Struktur (`components/hero.tsx`): bilah atas → panggung → headline + kolom c
   - Tablet: `max(380px, 100svh - 420px)`
   - Desktop: `max(460px, 100svh - 152px)`
 - **Susunan awal dipulihkan** (permintaan owner 3 Nov 2026, setelah mencoba foto di kiri dan lapis garis nama menu di depan foto):
-  - Nomor slide kiri atas (36 px HP, 72 px desktop).
+  - Tanpa nomor slide (dihapus di HP dan desktop agar bersih, permintaan owner 3 Nov 2026); posisi slide ditunjukkan titik carousel.
   - Nama menu raksasa rata tengah, di tengah vertikal panggung; HP/tablet satu kata per baris, desktop satu baris.
   - Foto di tengah, di depan nama menu: lebar 78% HP, 60% tablet, 42% desktop, tinggi 94% panggung.
 - **Ukuran kata raksasa** (`--n` = jumlah huruf nama, `--m` = kata terpanjang):
@@ -199,17 +199,26 @@ Struktur dan perilaku tetap seperti v1 (lihat `PRD.md` 7 dan koreksi owner di `l
 
 ---
 
-## 8. Gerak (MOTION 2)
+## 8. Gerak (MOTION 3)
 
-| Interaksi | Gerak |
-|---|---|
-| Ganti slide | crossfade 250 ms; foto naik 12 px + muncul 150 ms (tidak di muatan pertama) |
-| Tekan tombol / kartu | `scale(0.98)` / `scale(0.99)` 80 ms |
-| Hover kartu | naik 2 px, bayangan menebal 150 ms |
-| Header melekat, menu | turun 150 sampai 180 ms |
-| Bottom sheet | naik 200 ms |
+Pilihan owner 3 November 2026. Setiap gerak punya fungsi: mengarahkan mata ke makanan, menjelaskan perpindahan slide, atau memberi kedalaman. Implementasi: blok "Gerak hero dan scroll" di `globals.css` + state di `components/hero.tsx`.
 
-Tidak ada putar otomatis, scroll-reveal, atau parallax. `prefers-reduced-motion` mematikan semua gerak.
+| Gerak | Detail | Fungsi |
+|---|---|---|
+| Pembuka halaman (sekali) | Huruf nama menu naik bergelombang (jeda 45 ms per huruf, 800 ms); piring turun berputar dari -28° (1.100 ms), hanya transform agar LCP tidak tertunda | Kesan pertama, mengarahkan mata ke hidangan |
+| Ganti slide sinematik | Nama lama meluncur keluar 16%, nama baru masuk dari sisi berlawanan sesuai arah (700 ms); piring berputar ±25° + mengecil lalu mendarat (750 ms); crossfade 450 ms | Menjelaskan arah perpindahan |
+| Auto slide | Ganti tiap **2 detik** (owner; transisi 0,75 detik, jadi tiap menu diam ±1,25 detik); timer diulang setiap ganti manual; jeda saat kursor di hero, fokus di carousel/kolom cari, hero di luar layar, tab tersembunyi; tombol jeda/putar di samping titik (WCAG 2.2.2); mati bila "kurangi gerakan" | Etalase menu tanpa harus diklik |
+| Ayunan piring | Rotasi ±2,5° bolak-balik 9 detik. Bukan putaran penuh: foto diambil miring, diputar 360° akan tampak terguling | Panggung tetap hidup saat diam |
+| Parallax kursor (desktop, mouse) | Nama menu 14×8 px searah kursor, piring 26×16 px berlawanan, transisi 400 ms | Kedalaman 3D halus |
+| Parallax scroll | Selama 1 layar pertama: nama menu turun 30% dan memudar ke 25%, piring naik 6%, membesar 8%, berputar 6° (CSS `animation-timeline: scroll(root)`) | Transisi halus dari hero ke hasil |
+| Kartu muncul saat scroll | `.reveal`: naik 40 px + muncul saat masuk layar (CSS `animation-timeline: view()`), di daftar hasil dan favorit | Ritme saat menjelajah hasil |
+| Tekan / hover | Tombol `scale(0.98)`, kartu `scale(0.99)`; hover kartu naik 2 px | Umpan balik sentuh |
+| Header melekat, menu, sheet | Turun/naik 150 sampai 200 ms | Asal panel jelas |
+
+- Tiap gerak di elemen terpisah agar transform tidak saling menimpa: `.px-word`/`.px-photo` (parallax), `.giant-word`/`img` (transisi slide), `.glyph`/`img` (pembuka), `.plate-sway` (ayunan, properti `rotate`).
+- Hero memakai `overflow-x: clip` karena slide yang menunggu diparkir di luar sisi hero.
+- Browser tanpa scroll-driven animation (mis. Firefox lama) tetap tampil statis dan lengkap.
+- `prefers-reduced-motion: reduce` mematikan semua gerak dan auto slide.
 
 ---
 
@@ -249,6 +258,7 @@ Tidak ada putar otomatis, scroll-reveal, atau parallax. `prefers-reduced-motion`
 
 ## Changelog
 
+- **2.2** (3 November 2026): MOTION 3: pembuka halaman, ganti slide sinematik, auto slide 2 detik dengan tombol jeda, ayunan piring, parallax kursor dan scroll, kartu muncul saat scroll; nomor slide dihapus (HP dan desktop).
 - **2.1** (3 November 2026): grain halus di latar hero (6.1b); susunan hero awal dipulihkan setelah percobaan foto kiri dan lapis garis; foto besar di depan nama menu rata tengah (lapis garis di depan foto dicoba lalu ditolak owner), kolom cari umum (tidak mengikuti slide), slide ayam geprek dan es teh dilepas, URL foto berversi.
 - **2.0** (2 November 2026): arah "Oranye Bersih" menggantikan "Sambal Segar". Hero editorial setinggi layar (kuning + kata raksasa oranye), palet dari logo, komponen tanpa garis tebal/bayangan keras, logo polos di bidang krem, foto hero v2 hasil hapus latar, preload LCP.
 - 1.x: lihat `DESIGN-v1-sambal-segar.md`.

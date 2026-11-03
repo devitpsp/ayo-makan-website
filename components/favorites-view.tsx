@@ -91,7 +91,7 @@ export function FavoritesView() {
                 distanceM: loc.center ? Math.round(haversineM(loc.center, { lat: d.lat, lng: d.lng })) : null,
               };
               return (
-                <li key={f.id}>
+                <li key={f.id} className="reveal">
                   <PlaceCard place={place} cat={categoryOfType(d.primaryType)} rank={i + 1} from="favorit" />
                 </li>
               );

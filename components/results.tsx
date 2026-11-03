@@ -400,7 +400,7 @@ function Content({
     <>
       <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3" aria-label="Daftar tempat">
         {visible.map((p, i) => (
-          <li key={p.id}>
+          <li key={p.id} className="reveal">
             <PlaceCard place={p} cat={state.cat} radius={state.radius} rank={i + 1} from="hasil" />
           </li>
         ))}
